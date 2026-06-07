@@ -1,0 +1,35 @@
+ARG IMAGE
+ARG CMDLINE
+FROM $IMAGE as base
+
+FROM registry.fedoraproject.org/fedora-minimal:44 as signer
+RUN --mount=type=tmpfs,target=/run \
+    --mount=type=tmpfs,target=/tmp \
+    --mount=type=tmpfs,target=/var \
+    <<EORUN
+set -euxo pipefail
+dnf install -y systemd-ukify sbsigntools jq
+dnf install -y --enablerepo=updates-testing --refresh bootc
+EORUN
+
+FROM signer as kernel
+COPY scripts/uki-build.sh /uki-build.sh
+RUN --mount=type=bind,from=base,target=/target \
+    --network=none \
+    --mount=type=secret,id=secureboot_key \
+    --mount=type=secret,id=secureboot_cert \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/var/tmp \
+    <<EORUN
+set -euxo pipefail
+kver=$(basename $(find /target/usr/lib/modules -maxdepth 1 -mindepth 1 -type d -print0))
+ukify_args="\
+            --secureboot-private-key /run/secrets/secureboot_key \
+            --secureboot-certificate /run/secrets/secureboot_cert \
+            --measure \
+            --output /boot/${kver}.efi"
+bootc container ukify --rootfs /target --karg "\"$CMDLINE\"" -- ${ukify_args}
+EORUN
+
+FROM base
+COPY --from=kernel /boot/*.efi /boot/EFI/Linux/
