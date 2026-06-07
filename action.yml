@@ -1,0 +1,33 @@
+name: 'Seal bootc image'
+description: 'Seals a bootc image'
+inputs:
+  input-image:
+    description: 'Input image to seal'
+    required: true
+    default: 'World'
+  output-image:
+    description: 'Name of the generated sealed image'
+    required: true
+  signing-key:
+    required: true
+  signing-cert:
+    required: true
+  cmdline:
+    required: true
+  sudo:
+    required: false
+    default: ''
+runs:
+  using: "composite"
+  steps:
+    - name: Build sealed image
+      run: $SUDO podman build -t $OUTPUT_IMAGE --no-cache --build-arg IMAGE=$INPUT_IMAGE --build-arg CMDLINE=\"$CMDLINE\" --secret=id=secureboot_key,env=SIGNING_KEY --secret=id=secureboot_cert,env=SIGNING_CERT -f Containerfile.uki
+      shell: bash
+      env:
+        INPUT_IMAGE: ${{ inputs.input-image }}
+        OUTPUT_IMAGE: ${{ inputs.output-image }}
+        SIGNING_KEY: ${{ inputs.signing-key }}
+        SIGNING_CERT: ${{ inputs.signing-cert }}
+        CMDLINE: ${{ inputs.cmdline }}
+        SUDO: ${{ inputs.sudo }}
+
