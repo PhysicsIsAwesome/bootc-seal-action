@@ -23,7 +23,7 @@ runs:
     - name: Setup environment
       uses: bootc-dev/actions/bootc-ubuntu-setup@main
     - name: Build sealed image
-      run: $SUDO podman build -t "$OUTPUT_IMAGE" --no-cache --skip-unused-stages false  --build-arg IMAGE="$INPUT_IMAGE" --build-arg CMDLINE="$CMDLINE" --secret=id=secureboot_key,env=SIGNING_KEY --secret=id=secureboot_cert,env=SIGNING_CERT -f "${{ github.action_path }}/Containerfile.uki"
+      run: $SUDO podman build -t "$OUTPUT_IMAGE" --no-cache --skip-unused-stages false  --build-arg IMAGE="$INPUT_IMAGE" --build-arg CMDLINE="$CMDLINE" --secret=id=secureboot_key,env=SIGNING_KEY --secret=id=secureboot_cert,env=SIGNING_CERT -f "${{ github.action_path }}/Containerfile.uki" .
       shell: bash
       env:
         INPUT_IMAGE: "${{ inputs.input-image }}"
