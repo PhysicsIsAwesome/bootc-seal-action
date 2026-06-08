@@ -16,7 +16,7 @@ inputs:
     required: true
   sudo:
     required: false
-    default: ''
+    default: 'sudo'
 runs:
   using: "composite"
   steps:
