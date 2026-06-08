@@ -12,9 +12,39 @@ dnf install -y systemd-ukify sbsigntools jq
 dnf install -y --enablerepo=updates-testing --refresh bootc
 EORUN
 
+FROM base as base-sd-signed
+RUN --network=none \
+    --mount=type=secret,id=secureboot_key \
+    --mount=type=secret,id=secureboot_cert \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/var/tmp \
+sh -euxo pipefail -c '\
+    dracut --force "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E ".img" | tail -n 1)/initramfs.img"; \
+    sdboot="usr/lib/systemd/boot/efi/systemd-bootx64.efi"; \
+    sbsign \
+        --key /run/secrets/secureboot_key \
+        --cert /run/secrets/secureboot_cert \
+        --output "/${sdboot}" \
+        "/${sdboot}"; \
+
+FROM quay.io/coreos/chunkah AS chunkah
+RUN --mount=from=base-sd-signed,src=/,target=/chunkah,ro \
+    --mount=type=bind,target=/run/src,rw \
+        chunkah build \
+            --max-layers 256 \
+            --prune /ostree \
+            --prune /sysroot/ostree \
+            > /run/src/out.ociarchive
+
+FROM oci-archive:out.ociarchive as base-chunked
+LABEL containers.bootc 1
+ENV container=oci
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]
+
 FROM signer as kernel
 COPY scripts/uki-build.sh /uki-build.sh
-RUN --mount=type=bind,from=base,target=/target \
+RUN --mount=type=bind,from=base-chunked,target=/target \
     --network=none \
     --mount=type=secret,id=secureboot_key \
     --mount=type=secret,id=secureboot_cert \
@@ -31,5 +61,5 @@ ukify_args="\
 bootc container ukify --rootfs /target --karg "\"$CMDLINE\"" -- ${ukify_args}
 EORUN
 
-FROM base
+FROM base-chunked
 COPY --from=kernel /boot/*.efi /boot/EFI/Linux/
