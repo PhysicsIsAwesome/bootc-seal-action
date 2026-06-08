@@ -25,7 +25,7 @@ sh -euxo pipefail -c '\
         --key /run/secrets/secureboot_key \
         --cert /run/secrets/secureboot_cert \
         --output "/${sdboot}" \
-        "/${sdboot}"; \
+        "/${sdboot}";'
 
 FROM quay.io/coreos/chunkah AS chunkah
 RUN --mount=from=base-sd-signed,src=/,target=/chunkah,ro \
