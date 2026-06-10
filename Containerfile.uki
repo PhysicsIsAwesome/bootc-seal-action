@@ -29,7 +29,7 @@ sh -euxo pipefail -c '\
 
 FROM quay.io/coreos/chunkah AS chunkah
 RUN --mount=from=base-sd-signed,src=/,target=/chunkah,ro \
-    --mount=type=bind,src=./,target=/run/src,rw \
+    --mount=type=bind,target=/run/src,rw \
         chunkah build \
             --max-layers 256 \
             --prune /ostree \

@@ -32,7 +32,7 @@ runs:
         SB_CRT: "${{ inputs.signing-cert }}"
       shell: bash
     - name: Build sealed image
-      run: $SUDO podman build -t "$OUTPUT_IMAGE" --no-cache --skip-unused-stages=false  --build-arg IMAGE="$INPUT_IMAGE" --build-arg CMDLINE="$CMDLINE" --secret=id=secureboot_key,src=/tmp/keys/key --secret=id=secureboot_cert,src=/tmp/keys/crt -f "${{ github.action_path }}/Containerfile.uki" .
+      run: $SUDO podman build -t "$OUTPUT_IMAGE" --no-cache --skip-unused-stages=false -v $(pwd):/run/src --build-arg IMAGE="$INPUT_IMAGE" --build-arg CMDLINE="$CMDLINE" --secret=id=secureboot_key,src=/tmp/keys/key --secret=id=secureboot_cert,src=/tmp/keys/crt -f "${{ github.action_path }}/Containerfile.uki" .
       shell: bash
       env:
         INPUT_IMAGE: "${{ inputs.input-image }}"
