@@ -22,14 +22,25 @@ runs:
   steps:
     - name: Setup environment
       uses: bootc-dev/actions/bootc-ubuntu-setup@main
+    - name: "Get Secure Boot signing key"
+      run: |
+        mkdir -p /tmp/keys
+        printenv SB_KEY > /tmp/keys/key
+        printenv SB_CRT > /tmp/keys/crt
+      env:
+        SB_KEY: "${{ inputs.signing-key }}"
+        SB_CRT: "${{ inputs.signing-cert }}"
+      shell: bash
     - name: Build sealed image
-      run: $SUDO podman build -t "$OUTPUT_IMAGE" --no-cache --skip-unused-stages=false  --build-arg IMAGE="$INPUT_IMAGE" --build-arg CMDLINE="$CMDLINE" --secret=id=secureboot_key,env=SIGNING_KEY --secret=id=secureboot_cert,env=SIGNING_CERT -f "${{ github.action_path }}/Containerfile.uki" .
+      run: $SUDO podman build -t "$OUTPUT_IMAGE" --no-cache --skip-unused-stages=false  --build-arg IMAGE="$INPUT_IMAGE" --build-arg CMDLINE="$CMDLINE" --secret=id=secureboot_key,src=/tmp/keys/key --secret=id=secureboot_cert,src=/tmp/keys/crt -f "${{ github.action_path }}/Containerfile.uki" .
       shell: bash
       env:
         INPUT_IMAGE: "${{ inputs.input-image }}"
         OUTPUT_IMAGE: "${{ inputs.output-image }}"
-        SIGNING_KEY: "${{ inputs.signing-key }}"
-        SIGNING_CERT: "${{ inputs.signing-cert }}"
         CMDLINE: "${{ inputs.cmdline }}"
         SUDO: "${{ inputs.sudo }}"
+    - name: "Cleanup Secure Boot signing key"
+      if: always()
+      run: rm -vrf /tmp/keys
+      shell: bash
 
