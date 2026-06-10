@@ -1,5 +1,4 @@
 ARG IMAGE
-ARG CMDLINE
 FROM $IMAGE as base
 
 FROM registry.fedoraproject.org/fedora-minimal:44 as signer
@@ -13,6 +12,7 @@ dnf install -y --enablerepo=updates-testing --refresh bootc
 EORUN
 
 FROM base as base-sd-signed
+ARG CMDLINE
 RUN --network=none \
     --mount=type=secret,id=secureboot_key \
     --mount=type=secret,id=secureboot_cert \
