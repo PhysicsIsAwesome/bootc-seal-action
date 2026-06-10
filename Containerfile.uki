@@ -57,7 +57,8 @@ ukify_args="\
             --secureboot-certificate /run/secrets/secureboot_cert \
             --measure \
             --output /boot/${kver}.efi"
-bootc container ukify --rootfs /target --karg "\"$CMDLINE\"" -- ${ukify_args}
+echo "${CMDLINE}"
+bootc container ukify --rootfs /target --karg "\"${CMDLINE}\"" -- ${ukify_args}
 EORUN
 
 FROM base-chunked
