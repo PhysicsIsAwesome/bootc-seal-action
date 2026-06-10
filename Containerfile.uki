@@ -43,7 +43,6 @@ STOPSIGNAL SIGRTMIN+3
 CMD ["/sbin/init"]
 
 FROM signer as kernel
-COPY scripts/uki-build.sh /uki-build.sh
 RUN --mount=type=bind,from=base-chunked,target=/target \
     --network=none \
     --mount=type=secret,id=secureboot_key \
